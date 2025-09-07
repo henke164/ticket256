@@ -1,0 +1,153 @@
+<html>
+<style>
+  body {
+    background: #f4f4f9;
+    font-family: 'Fira Code', monospace;
+    height: 100vh;
+  }
+
+
+  .header {
+    margin-top: 20px;
+    display: block;
+    font-weight: bold;
+  }
+
+  input[type=text] {
+    width: 500px;
+    padding: 5px;
+    border-radius: 10px;
+  }
+
+  textarea {
+    width: 500px;
+    height: 500px;
+  }
+
+  tr td {
+    padding: 20px;
+    vertical-align: top;
+  }
+
+  .code-box {
+    background: #2e3440;
+    color: #d8dee9;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1.6;
+    width: 500px;
+    overflow-x: auto;
+  }
+
+  .keyword {
+    color: #81a1c1;
+  }
+
+  .func {
+    color: #88c0d0;
+  }
+
+  .string {
+    color: #a3be8c;
+  }
+
+  .number {
+    color: #b48ead;
+  }
+
+  .comment {
+    color: #616e87;
+    font-style: italic;
+  }
+</style>
+
+<body>
+  <div>
+    <div>
+      <span class="header">Raffle Id</span>
+      <input id="raffleId" type="text" value="cdb89369-8ac0-4c64-b77e-0ac4e9ad1e77" />
+    </div>
+    <div>
+      <button onclick="showRaffle()">Load Raffle</button>
+    </div>
+    <div id="errorMessage"></div>
+  </div>
+  <hr>
+  <div>
+    <span class="header">Tickets</span>
+    <table>
+      <tr>
+        <td>
+          Verify that no tickets are manipulated added or removed. The ticket checksum is the SHA256 result of all
+          ticket id's that are in the raffle.<br>
+          <div class="code-box" style="margin-top: 20px">
+            <code>
+              // Ticket hash verification function
+              function verify (ticketIds, expectedTicketHash) {
+                &nbsp;&nbsp;// Convert the array to a string
+                &nbsp;&nbsp;const encoder = new TextEncoder();
+                &nbsp;&nbsp;// Skapa hash med Web Crypto API 
+                &nbsp;&nbsp;const data = encoder.encode(ticketIds.join(''));
+                &nbsp;&nbsp;const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+                &nbsp;&nbsp;// Konvertera till hex-sträng
+                &nbsp;&nbsp;const hashArray = Array.from(new Uint8Array(hashBuffer));
+                &nbsp;&nbsp;const hashHex = hashArray .map(b => b.toString(16).padStart(2, "0")).join("");
+                &nbsp;&nbsp;return ticketHash === expectedTicketHash;
+              }
+
+              // Run the function
+              const verified = verify(ticketIds, "utf8");
+              console.log(verified);
+
+            </code>
+          </div>
+
+        </td>
+        <td>
+          Ticket ids:<br>
+          <textarea id="tickets"></textarea>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <script>
+    const raffleIdElement = document.querySelector('#raffleId');
+    const errorMsgElement = document.querySelector('#errorMessage');
+    const ticketHashElement = document.querySelector('#ticketHash');
+
+    async function showRaffle() {
+      const raffleId = raffleIdElement.value;
+      console.log(raffleId);
+      const raffleResponse = await fetch(`/raffles/${raffleId}`);
+      if (raffleResponse.status === 404) {
+        errorMsgElement.innerHTML = "Raffle not found!";
+        return;
+      }
+
+      const raffle = await raffleResponse.json();
+
+      ticketHashElement.innerHTML = `"${raffle.ticketHash}"`;
+      tickets.value = JSON.stringify(raffle.tickets.map(t => t.id));
+    }
+
+    window.onload = function () {
+      let codeEls = document.querySelectorAll("code");
+      for (const codeEl of codeEls) {
+        let text = codeEl.textContent;
+
+        let highlighted = text
+          .replace(/(\/\/.*)/g, '<span class="comment">$1</span>')      // kommentarer
+          .replace(/\b(const|let|function|return|console|new)\b/g, '<span class="keyword">$1</span>') // keywords
+          .replace(/('.*?')/g, '<span class="string">$1</span>') // strängar
+          .replace(/\n/g, '<br>'); // radbrytningar
+
+        console.log(highlighted);
+        codeEl.innerHTML = highlighted;
+      }
+    };
+  </script>
+</body>
+
+</html>

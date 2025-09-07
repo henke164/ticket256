@@ -13,18 +13,21 @@
   <div id="raffle-info">
 
   </div>
-  <table id="ticket-table">
+  <table id="tickets-table">
 
   </table>
   <script>
-    function createRaffle() {
+    async function createRaffle() {
       const ticketsElement = document.getElementById('ticketcount');
       const endTimeElement = document.getElementById('endTime');
+
+      const raffleInfoElement = document.getElementById('raffle-info');
+      const ticketsTableElement = document.getElementById('tickets-table');
 
       const tickets = parseInt(ticketsElement.value);
       const endTime = new Date(endTimeElement.value);
 
-      fetch('http://localhost:3001/raffle/start', {
+      const res = await fetch('http://localhost:3001/raffles', {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -33,7 +36,43 @@
           tickets,
           endTime
         })
-      })
+      });
+
+      const raffle = await res.json();
+      const endTimeResponse = new Date(raffle.endTime);
+
+      raffleInfoElement.innerHTML = `
+        <div>
+          Raffle Id: <b>${raffle.id}</b>
+        </div>
+        <div>
+          Public Hash: <b>${raffle.publicHash}</b>
+        </div>
+        <div>
+          Secret Seed (Hidden): <b>${raffle.secretSeed}</b>
+        </div>
+        <div>
+          TicketHash: <b>${raffle.ticketHash}</b>
+        </div>
+        <div>
+          Raffle End time: <b>${endTimeResponse.toLocaleDateString()} ${endTimeResponse.toLocaleTimeString()}</b>
+        </div>
+      `;
+
+      ticketsTableElement.innerHTML = `
+        <tr>
+          <td>No.</td>
+          <td>Id</td>
+        <tr>
+      `;
+      for (const ticket of raffle.tickets) {
+        ticketsTableElement.innerHTML += `
+          <tr>
+            <td>#${ticket.number}</td>
+            <td>${ticket.id}</td>
+          <tr>
+        `;
+      }
     }
   </script>
 </body>

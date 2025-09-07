@@ -16,6 +16,7 @@ export async function getRaffle(id: string, isPublic: boolean) {
   if (!fs.existsSync(`${__dirname}/../raffles/${id}.json`)) {
     return null;
   }
+
   const json = fs
     .readFileSync(`${__dirname}/../raffles/${id}.json`)
     .toString("utf-8");
@@ -58,16 +59,18 @@ export async function createRaffle(
     raffle.tickets.push(ticket);
   }
 
-  const ticketHashes = raffle.tickets.map((t) => t.id).join("");
+  const ticketIds = raffle.tickets.map((t) => t.id).join("");
   raffle.ticketHash = crypto
     .createHash("sha256")
-    .update(ticketHashes, "utf8")
+    .update(ticketIds, "utf8")
     .digest("hex");
 
-  fs.writeFileSync(
-    `${__dirname}/../raffles/${raffle.id}.json`,
-    JSON.stringify(raffle)
-  );
+  const rafflesDir = `${__dirname}/../raffles`;
+  if (!fs.existsSync(rafflesDir)) {
+    fs.mkdirSync(rafflesDir);
+  }
+
+  fs.writeFileSync(`${rafflesDir}/${raffle.id}.json`, JSON.stringify(raffle));
 
   return raffle;
 }
