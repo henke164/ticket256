@@ -1,16 +1,17 @@
-import { Game } from "@/types/Game";
+import { Raffle } from "@/types/Raffle";
 import { Ticket } from "@/types/Ticket";
 import { randomUUID } from "crypto";
 
 export async function createTicket(
   number: number,
-  game: Game
+  raffle: Raffle
 ): Promise<Ticket> {
   const ticket: Ticket = {
     id: randomUUID(),
-    gameId: game.id,
+    raffleId: raffle.id,
     number,
     ownerId: 1,
+    purchasedAt: null,
   };
 
   return ticket;

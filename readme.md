@@ -1,5 +1,5 @@
-Create game:
-fetch('http://localhost:3001/game/start', {
+Create draw:
+fetch('http://localhost:3001/draw/start', {
   method: 'POST',
   headers: {
     'content-type': 'application/json',

@@ -2,9 +2,9 @@ import express from "express";
 const router = express.Router();
 
 import tickets from "./tickets";
-import game from "./game";
+import raffles from "./raffles";
 
 router.use("/tickets", tickets);
-router.use("/game", game);
+router.use("/raffles", raffles);
 
 export default router;

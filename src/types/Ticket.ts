@@ -1,6 +1,7 @@
 export type Ticket = {
-  id: string;
   number: number;
-  gameId: string;
+  raffleId: string | undefined;
+  id: string;
   ownerId: number | null;
+  purchasedAt: Date | null;
 };

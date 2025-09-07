@@ -1,0 +1,41 @@
+<html>
+
+<body>
+  <div>
+    <span>End date</span>
+    <input id="endTime" type="text" value="2025-11-07 09:00" />
+  </div>
+  <div>
+    <span>Tickets</span>
+    <input id="ticketcount" type="number" value="50" />
+  </div>
+  <button onclick="createRaffle()">Create</button>
+  <div id="raffle-info">
+
+  </div>
+  <table id="ticket-table">
+
+  </table>
+  <script>
+    function createRaffle() {
+      const ticketsElement = document.getElementById('ticketcount');
+      const endTimeElement = document.getElementById('endTime');
+
+      const tickets = parseInt(ticketsElement.value);
+      const endTime = new Date(endTimeElement.value);
+
+      fetch('http://localhost:3001/raffle/start', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          tickets,
+          endTime
+        })
+      })
+    }
+  </script>
+</body>
+
+</html>
