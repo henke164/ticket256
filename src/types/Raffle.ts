@@ -6,5 +6,5 @@ export type Raffle = {
   publicHash: string;
   tickets: Ticket[];
   endTime: Date;
-  ticketHash: string | null;
+  ticketChecksum: string | null;
 };

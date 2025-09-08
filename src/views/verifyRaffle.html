@@ -1,20 +1,26 @@
 <html>
+
+<head>
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/highlight.min.js"></script>
+</head>
 <style>
   body {
     background: #f4f4f9;
     font-family: 'Fira Code', monospace;
     height: 100vh;
+    max-width: 800px;
   }
 
 
   .header {
+    font-size: 18px;
     margin-top: 20px;
     display: block;
     font-weight: bold;
   }
 
   input[type=text] {
-    width: 500px;
+    width: 100%;
     padding: 5px;
     border-radius: 10px;
   }
@@ -37,7 +43,7 @@
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     font-size: 12px;
     line-height: 1.6;
-    width: 500px;
+    width: 600px;
     overflow-x: auto;
   }
 
@@ -70,32 +76,134 @@
     color: white;
     padding: 5px 20px;
   }
+
+  button:hover {
+    background: #3e4756;
+    cursor: pointer;
+  }
 </style>
 
 <body>
   <div>
     <div>
       <span class="header">Raffle Id</span>
-      <input id="raffleId" type="text" value="cdb89369-8ac0-4c64-b77e-0ac4e9ad1e77" />
+      <input id="raffleId" type="text" value="3c5b2ba1-02ba-46f8-a1f3-959cbbdcd60c" />
       <button onclick="showRaffle()">Load Raffle</button>
     </div>
     <div id="errorMessage"></div>
   </div>
   <hr>
   <div>
-    <span class="header">Tickets</span>
+    <span class="header">Winner algorithm</span>
+    The algorithm that decides which ticket is the winner is calculated based on:
+    <ul>
+      <li>(1)Secret Seed</li>
+      <li>(2)Ticket Checksum</li>
+      <li>(3)The first Bitcoin Block hash that is created after the Raffle is ended</li>
+    </ul>
+
+    By adding (3), we can prove that we are not able to know the outcome of the raffle.
+    I.e. If the raffle ends at 2025-09-08 18:43, the first Bitcoin Block hash will be:
+    <a
+      href="https://www.blockchain.com/explorer/blocks/btc/913766">000000000000000000015d06da2dfc973244f48e46063a6c0d26565f59984f5b</a>
+
+    <pre>
+      <code class="language-js">
+        function hmacValue(seed, ticketNumber) {
+          return crypto
+            .createHmac("sha256", seed)
+            .update(ticketNumber)
+            .digest("hex");
+        }
+      </code>
+    </pre>
+
+    <div class="code-box" style="margin-top: 20px">
+      <code>
+        function hmacValue(seed, ticketNumber) {
+        &nbsp;&nbsp;return crypto
+        &nbsp;&nbsp;&nbsp;&nbsp;.createHmac("sha256", seed)
+        &nbsp;&nbsp;&nbsp;&nbsp;.update(ticketNumber)
+        &nbsp;&nbsp;&nbsp;&nbsp;.digest("hex");
+        }
+
+        function decideWinner(raffle, secretSeed, ticketChecksum, bitcoinBlockHash) {
+          &nbsp;&nbsp;const seed = secretSeed + ticketChecksum + bitcoinBlockHash;
+
+          &nbsp;&nbsp;// Only tickets with owners. If the ticket isn't bought, it cannot win
+          &nbsp;&nbsp;const ownedTickets = raffle.tickets.filter((t) => t.ownerId !== null);
+          &nbsp;&nbsp;if (ownedTickets.length === 0) {
+          &nbsp;&nbsp;&nbsp;&nbsp;return null;
+          &nbsp;&nbsp;}
+
+          &nbsp;&nbsp;// Create a top-list based on the random seed
+          &nbsp;&nbsp;let leader = null;
+          &nbsp;&nbsp;for (const t of ownedTickets) {
+          &nbsp;&nbsp;&nbsp;&nbsp;const h = hmacValue(seed, t.number.toString());
+          &nbsp;&nbsp;&nbsp;&nbsp;const value = BigInt("0x" + h);
+
+          &nbsp;&nbsp;&nbsp;&nbsp;if (!leader || value > leader.value) {
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;leader = { ticket: t, value };
+          &nbsp;&nbsp;&nbsp;&nbsp;}
+          &nbsp;&nbsp;}
+
+          &nbsp;&nbsp;// Winner is the top scored ticket
+          &nbsp;&nbsp;return leader?.ticket || null;
+        }
+      </code>
+    </div>
+
+  </div>
+  <div>
+    <span class="header">Secret Seed</span>
+    When a raffle is created, the public SHA256-encrypted string of the (1)Secret Seed is published.
+    This means that we can prove that the Secret Seed is set when the raffle is created, and not manipulated later on.
+    <br>
+    <div class="code-box" style="margin-top: 20px">
+      <code>
+        // Create public hash of the secret seed
+        const publicHash = SHA256(secretSeed);
+
+        // When the raffle is ended, the secret seed is published, and can be verified:
+        function verifySHA256(secretSeed, expectedHash) {
+        &nbsp;&nbsp;const hash = crypto.createHash('sha256').update(secretSeed).digest('hex');
+        &nbsp;&nbsp;return hash === expectedHash;
+        }
+
+        const verified = verifySHA256(secretSeed, publicHash);
+      </code>
+    </div>
+  </div>
+  <div>
+    <span class="header">Tickets verification</span>
+    Verify that no tickets are manipulated added or removed. The ticket checksum is the SHA256 result of all
+    ticket id's that are created in the raffle.<br><br>
+
+    All tickets are created once whe raffle is created. The Ticket Checksum is available together with all the tickets
+    ids.<br><br>
+
+    After a raffle-winner is decided, you can verify the Ticket Checksum to make sure no tickets are added or removed.
+
+    The Ticket Checksum is a part of the random algorithm that decides the winner.
+
+    You can verify the TICKET_CHECKSUM with this function:<br><br>
     <table>
       <tr>
         <td>
-          Verify that no tickets are manipulated added or removed. The ticket checksum is the SHA256 result of all
-          ticket id's that are in the raffle.<br><br>
-          You can verify the TICKET_CHECKSUM with this function. Just replace the "TICKET_CHECKSUM" with the checksum
-          from the raffle:
-
+          <div>
+            Ticket ids:<br>
+            <textarea id="tickets" style="width: 400px"></textarea>
+          </div>
+          <div style="margin: 10px 0">
+            TICKET_CHECKSUM:<br>
+            <input type="text" id="ticketChecksum" disabled>
+          </div>
+        </td>
+        <td>
           <div class="code-box" style="margin-top: 20px">
             <code>
               // Ticket checksum verification
-              async function verify (ticketIds, expectedTicketHash) {
+              async function verify (ticketIds, expectedticketChecksum) {
                 &nbsp;&nbsp;const encoder = new TextEncoder();
                 &nbsp;&nbsp;const data = encoder.encode(ticketIds.join(''));
                 &nbsp;&nbsp;const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -105,7 +213,7 @@
                 &nbsp;&nbsp;&nbsp;&nbsp;.map(b => b.toString(16)
                 &nbsp;&nbsp;&nbsp;&nbsp;.padStart(2, '0')).join('');
 
-                &nbsp;&nbsp;return ticketHash === expectedTicketHash;
+                &nbsp;&nbsp;return ticketChecksum === expectedticketChecksum;
               }
 
               // Example Verify hash
@@ -120,19 +228,26 @@
 
             </code>
           </div>
-
-        </td>
-        <td>
-          Ticket ids:<br>
-          <textarea id="tickets"></textarea>
         </td>
       </tr>
     </table>
+    <div style="width: 300px">
+      (1)Secret Seed:
+      <input type="text" />
+    </div>
+    <div style="width: 300px">
+      (2)Ticket Checksum:
+      <input type="text" />
+    </div>
+    <div style="width: 300px">
+      (3)Bitcoin Hash:
+      <input type="text" />
+    </div>
   </div>
   <script>
     const raffleIdElement = document.querySelector('#raffleId');
     const errorMsgElement = document.querySelector('#errorMessage');
-    const ticketHashElement = document.querySelector('#ticketHash');
+    const ticketChecksumElement = document.querySelector('#ticketChecksum');
 
     async function showRaffle() {
       const raffleId = raffleIdElement.value;
@@ -145,8 +260,8 @@
 
       const raffle = await raffleResponse.json();
 
-      ticketHashElement.innerHTML = `"${raffle.ticketHash}"`;
-      tickets.value = JSON.stringify(raffle.tickets.map(t => t.id));
+      ticketChecksumElement.value = raffle.ticketChecksum;
+      tickets.value = JSON.stringify(raffle.tickets.map(t => t.id), null, 2);
     }
 
     window.onload = function () {
@@ -156,8 +271,8 @@
 
         let highlighted = text
           .replace(/(\/\/.*)/g, '<span class="comment">$1</span>')
-          .replace(/\b(const|let|function|async|return|console|new|await|log)\b/g, '<span class="keyword">$1</span>')
-          .replace(/\b(TextEncoder|Uint8Array|Array)\b/g, '<span class="func">$1</span>')
+          .replace(/\b(const|let|function|async|return|console|new|await|log|if)\b/g, '<span class="keyword">$1</span>')
+          .replace(/\b(TextEncoder|Uint8Array|Array|BigInt|hmacValue)\b/g, '<span class="func">$1</span>')
           .replace(/('.*?')/g, '<span class="string">$1</span>')
           .replace(/\n/g, '<br>');
 

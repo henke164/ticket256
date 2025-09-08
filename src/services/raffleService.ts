@@ -3,7 +3,12 @@ import { Raffle } from "@/types/Raffle";
 import crypto, { randomUUID } from "crypto";
 import { createTicket } from "./ticketService";
 import getCurrentBlock from "./blockService";
-import { Winner } from "@/types/Winner";
+import { Ticket } from "@/types/Ticket";
+
+type RaffleLeader = {
+  ticket: Ticket | null;
+  value: bigint;
+};
 
 function hmacValue(serverSeed: string, ticketNumber: crypto.BinaryLike) {
   return crypto
@@ -36,7 +41,7 @@ export async function getRaffle(id: string, isPublic: boolean) {
 
 export async function createRaffle(
   tickets: number,
-  endTime: string
+  endTime: string,
 ): Promise<Raffle> {
   const secretSeed = crypto.randomBytes(32).toString("hex");
 
@@ -51,7 +56,7 @@ export async function createRaffle(
     publicHash,
     tickets: [],
     endTime: new Date(endTime),
-    ticketHash: null,
+    ticketChecksum: null,
   };
 
   for (let i = 0; i < tickets; i++) {
@@ -60,7 +65,7 @@ export async function createRaffle(
   }
 
   const ticketIds = raffle.tickets.map((t) => t.id).join("");
-  raffle.ticketHash = crypto
+  raffle.ticketChecksum = crypto
     .createHash("sha256")
     .update(ticketIds, "utf8")
     .digest("hex");
@@ -75,32 +80,29 @@ export async function createRaffle(
   return raffle;
 }
 
-export async function getWinner(raffle: Raffle): Promise<Winner> {
-  let seed = await getCurrentBlock(1);
-  seed += raffle.secretSeed;
+export async function getWinner(raffle: Raffle): Promise<Ticket | null> {
+  let seed = raffle.secretSeed || "";
+  seed += raffle.ticketChecksum || "";
+  seed += await getCurrentBlock(1);
 
-  const mapped = raffle.tickets
-    .filter((t) => t.ownerId !== null)
-    .map((t) => {
-      const h = hmacValue(seed, t.number.toString());
-      const val = BigInt("0x" + h);
-      return {
-        ticket: t,
-        h,
-        val,
-      };
-    });
+  const ownedTickets = raffle.tickets.filter(
+    (t) => t.ownerId !== null && t.purchasedAt,
+  );
 
-  mapped.sort((a, b) => (a.val > b.val ? -1 : 1));
-  const winner = mapped[0];
-  if (!winner) {
-    throw Error("Winner not found!");
+  if (ownedTickets.length === 0) {
+    return null;
   }
 
-  return {
-    ticket: winner.ticket,
-    h: winner.h,
-    seed: seed,
-    val: winner.val.toString(),
-  };
+  let leader: RaffleLeader | null = null;
+
+  for (const t of ownedTickets) {
+    const h = hmacValue(seed, t.number.toString());
+    const value = BigInt("0x" + h);
+
+    if (!leader || value > leader.value) {
+      leader = { ticket: t, value };
+    }
+  }
+
+  return leader?.ticket || null;
 }
