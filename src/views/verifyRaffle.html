@@ -35,7 +35,7 @@
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    font-size: 14px;
+    font-size: 12px;
     line-height: 1.6;
     width: 500px;
     overflow-x: auto;
@@ -61,6 +61,15 @@
     color: #616e87;
     font-style: italic;
   }
+
+  button {
+    display: inline-block;
+    border-radius: 10px;
+    border: none;
+    background: #616e87;
+    color: white;
+    padding: 5px 20px;
+  }
 </style>
 
 <body>
@@ -68,8 +77,6 @@
     <div>
       <span class="header">Raffle Id</span>
       <input id="raffleId" type="text" value="cdb89369-8ac0-4c64-b77e-0ac4e9ad1e77" />
-    </div>
-    <div>
       <button onclick="showRaffle()">Load Raffle</button>
     </div>
     <div id="errorMessage"></div>
@@ -81,24 +88,34 @@
       <tr>
         <td>
           Verify that no tickets are manipulated added or removed. The ticket checksum is the SHA256 result of all
-          ticket id's that are in the raffle.<br>
+          ticket id's that are in the raffle.<br><br>
+          You can verify the TICKET_CHECKSUM with this function. Just replace the "TICKET_CHECKSUM" with the checksum
+          from the raffle:
+
           <div class="code-box" style="margin-top: 20px">
             <code>
-              // Ticket hash verification function
-              function verify (ticketIds, expectedTicketHash) {
-                &nbsp;&nbsp;// Convert the array to a string
+              // Ticket checksum verification
+              async function verify (ticketIds, expectedTicketHash) {
                 &nbsp;&nbsp;const encoder = new TextEncoder();
-                &nbsp;&nbsp;// Skapa hash med Web Crypto API 
                 &nbsp;&nbsp;const data = encoder.encode(ticketIds.join(''));
-                &nbsp;&nbsp;const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-                &nbsp;&nbsp;// Konvertera till hex-sträng
+                &nbsp;&nbsp;const hashBuffer = await crypto.subtle.digest('SHA-256', data);
                 &nbsp;&nbsp;const hashArray = Array.from(new Uint8Array(hashBuffer));
-                &nbsp;&nbsp;const hashHex = hashArray .map(b => b.toString(16).padStart(2, "0")).join("");
+
+                &nbsp;&nbsp;const hashHex = hashArray
+                &nbsp;&nbsp;&nbsp;&nbsp;.map(b => b.toString(16)
+                &nbsp;&nbsp;&nbsp;&nbsp;.padStart(2, '0')).join('');
+
                 &nbsp;&nbsp;return ticketHash === expectedTicketHash;
               }
 
-              // Run the function
-              const verified = verify(ticketIds, "utf8");
+              // Example Verify hash
+              const ticketIds = [
+                &nbsp;&nbsp;'63140d1c-15da-4d2c-b8d0-029663d451e8',
+                &nbsp;&nbsp;'e4019bd3-5ac4-4d4f-84db-4f7b5653c9b1',
+                &nbsp;&nbsp;...
+              ];
+              
+              const verified = verify(ticketIds, 'TICKET_CHECKSUM');
               console.log(verified);
 
             </code>
@@ -138,10 +155,11 @@
         let text = codeEl.textContent;
 
         let highlighted = text
-          .replace(/(\/\/.*)/g, '<span class="comment">$1</span>')      // kommentarer
-          .replace(/\b(const|let|function|return|console|new)\b/g, '<span class="keyword">$1</span>') // keywords
-          .replace(/('.*?')/g, '<span class="string">$1</span>') // strängar
-          .replace(/\n/g, '<br>'); // radbrytningar
+          .replace(/(\/\/.*)/g, '<span class="comment">$1</span>')
+          .replace(/\b(const|let|function|async|return|console|new|await|log)\b/g, '<span class="keyword">$1</span>')
+          .replace(/\b(TextEncoder|Uint8Array|Array)\b/g, '<span class="func">$1</span>')
+          .replace(/('.*?')/g, '<span class="string">$1</span>')
+          .replace(/\n/g, '<br>');
 
         console.log(highlighted);
         codeEl.innerHTML = highlighted;
