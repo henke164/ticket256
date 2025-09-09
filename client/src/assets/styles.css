@@ -1,0 +1,22 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background-color: #e8e6e6;
+}
+
+h1,
+h2,
+h3 {
+  color: #333;
+}
+
+nav {
+  color: white;
+  padding: 20px;
+  background-color: #496b9e;
+}
+
+nav a {
+  font-weight: 600;
+  color: white;
+}
