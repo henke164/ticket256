@@ -29,8 +29,9 @@ const selectedOption = ref<'try' | 'js' | 'python'>('try')
   }
 
   .intro {
-    margin: 20px;
+    padding: 20px;
     color: white;
+    background-color: #22344e;
   }
 
   .intro h2 {
@@ -42,7 +43,7 @@ const selectedOption = ref<'try' | 'js' | 'python'>('try')
 <template>
   <div>
     <div class="intro">
-      <h2>Verify game winner</h2>
+      <h2>Verify winner</h2>
       Below is the algorithm that decides the winning ticket. 
     </div>
     <div class="selector">
@@ -56,6 +57,8 @@ const selectedOption = ref<'try' | 'js' | 'python'>('try')
 </template>
 
 <script lang="ts">
+import { defineComponent } from 'vue';
+
 const winnerAlgorithmJs = `
 function hmacValue(seed, ticketNumber) {
   return crypto
@@ -106,7 +109,7 @@ def decide_winner(raffle: dict, secret_seed: str, ticket_checksum: str, bitcoin_
   leader = None
   for t in owned_tickets:
     h = hmac_value(seed, str(t['number']))
-    value = int(h, 16)  # Konvertera hex till ett heltal
+    value = int(h, 16)
 
     if leader is None or value > leader['value']:
       leader = {'ticket': t, 'value': value}
@@ -114,5 +117,9 @@ def decide_winner(raffle: dict, secret_seed: str, ticket_checksum: str, bitcoin_
   return leader['ticket'] if leader else None
 
 `;
+
+export default defineComponent({
+  name: 'DecideWinner',
+});
 </script>
 <style scoped></style>

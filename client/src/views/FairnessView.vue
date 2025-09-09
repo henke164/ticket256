@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import DecideWinner from '@/components/fairness/DecideWinner.vue';
-import { ref } from 'vue'
+import DecideWinner from '../components/fairness/DecideWinner.vue';
+import VerifyTickets from '../components/fairness/VerifyTickets.vue';
 import 'highlight.js/lib/common';
 import 'highlight.js/styles/github-dark.css'
 
-const selectedOption = ref<'try' | 'js' | 'python'>('try')
 </script>
 
 <style scoped>
@@ -40,6 +39,19 @@ const selectedOption = ref<'try' | 'js' | 'python'>('try')
     padding: 10px 20px;
     text-decoration: none;
   }
+
+  .example {
+    margin: 20px;
+    color: white;
+    border-radius: 10px;
+    border: 1px solid #aaa;
+    background: #0d1117;
+    padding: 20px 30px;
+  }
+
+  .example a {
+    color: #4b24f9;
+  }
 </style>
 
 <template>
@@ -47,25 +59,52 @@ const selectedOption = ref<'try' | 'js' | 'python'>('try')
     <div class="column content">
       <h1>How can I know that the game is fair?</h1>
       <div>
-        <span class="header">Winner algorithm</span>
+        <h4>Winner algorithm</h4>
         The algorithm that decides which ticket is the winner is calculated based on:
         <ul>
-          <li>(1)Secret Seed</li>
-          <li>(2)Ticket Checksum</li>
-          <li>(3)The first Bitcoin Block hash that is created after the Raffle is ended</li>
+          <li>(1) Secret Seed</li>
+          <li>(2) Ticket Checksum</li>
+          <li>(3) Bitcoin Block Hash</li>
         </ul>
+        Random Seed = Secret Seed + Ticket Checksum + Bitcoin Block Hash
 
-        By adding (3), we can prove that we are not able to know the outcome of the raffle.
-        I.e. If the raffle ends at 2025-09-08 18:43, the first Bitcoin Block hash will be:
+        <h4>(1) Secret Seed</h4>
+        When a raffle is created, a public SHA256-encrypted string of the Secret Seed is published.
+        This means that we can prove that the Secret Seed is generated when the raffle is created, and not manipulated later on.
+
+        <h4>(2) Ticket Checksum</h4>
+        All the tickets that are available in a raffle are created at the same time as the Raffle is created.
+        Every ticket has a number and an unique identifier.
+        <div>
+        For example:
+        <ul>
+          <li>#1. 4df25678</li>
+          <li>#2. ef6a8595</li>
+          <li>#3. ced38bb0</li>
+          <li>...</li>
+        </ul>
+        The ticket checksum is the SHA256 result of all ticket unique identifiers that are created in the raffle.
+        After a raffle-winner is decided, you can verify the Ticket Checksum to make sure no tickets are added or removed.
+
+        
+        </div>
+
+        <h4>(3) The Bitcoin Block Hash</h4>
+        We take the first Bitcoin Block hash that is created right after the Raffle is ended, and before the winner is decided and add it to the random salt.
+        By adding it, we can prove that we are not able to know the outcome of the raffle.
+        <div class="example">
+        <b>Example:</b><br>If the raffle ends at 2025-09-08 18:43, the first Bitcoin Block hash will be:
         <a
+        target="_blank"
           href="https://www.blockchain.com/explorer/blocks/btc/913766">000000000000000000015d06da2dfc973244f48e46063a6c0d26565f59984f5b</a>
+        </div>
         <br>
         <br>
         <br>
-        Seed = Secret Seed + Ticket Checksum + Bitcoin Block Hash
       </div>
     </div>
     <div class="column code">
+      <VerifyTickets />
       <DecideWinner />
     </div>
   </div>

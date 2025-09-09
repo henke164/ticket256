@@ -19,6 +19,9 @@ router.get("/verify", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   const raffle = await getRaffle(req.params.id, true);
+  if (!raffle) {
+    return res.sendStatus(404);
+  }
   res.send(raffle);
 });
 

@@ -202,29 +202,7 @@
         <td>
           <div class="code-box" style="margin-top: 20px">
             <code>
-              // Ticket checksum verification
-              async function verify (ticketIds, expectedticketChecksum) {
-                &nbsp;&nbsp;const encoder = new TextEncoder();
-                &nbsp;&nbsp;const data = encoder.encode(ticketIds.join(''));
-                &nbsp;&nbsp;const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-                &nbsp;&nbsp;const hashArray = Array.from(new Uint8Array(hashBuffer));
 
-                &nbsp;&nbsp;const hashHex = hashArray
-                &nbsp;&nbsp;&nbsp;&nbsp;.map(b => b.toString(16)
-                &nbsp;&nbsp;&nbsp;&nbsp;.padStart(2, '0')).join('');
-
-                &nbsp;&nbsp;return ticketChecksum === expectedticketChecksum;
-              }
-
-              // Example Verify hash
-              const ticketIds = [
-                &nbsp;&nbsp;'63140d1c-15da-4d2c-b8d0-029663d451e8',
-                &nbsp;&nbsp;'e4019bd3-5ac4-4d4f-84db-4f7b5653c9b1',
-                &nbsp;&nbsp;...
-              ];
-              
-              const verified = verify(ticketIds, 'TICKET_CHECKSUM');
-              console.log(verified);
 
             </code>
           </div>

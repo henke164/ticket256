@@ -1,9 +1,9 @@
 import fs from "fs";
-import { Raffle } from "@/types/Raffle";
+import { Raffle } from "../types/Raffle";
 import crypto, { randomUUID } from "crypto";
 import { createTicket } from "./ticketService";
 import getCurrentBlock from "./blockService";
-import { Ticket } from "@/types/Ticket";
+import { Ticket } from "../types/Ticket";
 
 type RaffleLeader = {
   ticket: Ticket | null;

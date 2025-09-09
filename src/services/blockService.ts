@@ -1,6 +1,6 @@
 export default async function getCurrentBlock(blockId: number) {
   const res = await fetch(
-    `https://blockchain.info/block-height/${blockId}?format=json`
+    `https://blockchain.info/block-height/${blockId}?format=json`,
   );
 
   const json = await res.json();
