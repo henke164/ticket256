@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { fetchRaffle } from '@/services/raffleService';
-import type { Ticket } from '@/types/Ticket';
 import 'highlight.js/lib/common';
 import 'highlight.js/styles/github-dark.css';
 
 const raffleId = ref<string>('3c5b2ba1-02ba-46f8-a1f3-959cbbdcd60c');
-const ticketIds = ref<string>('');
-const checksum = ref<string>('');
+const seed = ref<string>('');
+const sha256 = ref<string>('');
 const error = ref<string>('');
-const checksumError = ref<string>('');
+const sha256Error = ref<string>('');
 const selectedOption = ref<'try' | 'js' | 'python'>('js');
 
 async function loadFromRaffle() {
@@ -17,27 +16,23 @@ async function loadFromRaffle() {
   const raffle = await fetchRaffle(raffleId.value);
   if (raffle === null) {
     error.value = 'Raffle not found!';
-    checksum.value = '';
+    sha256.value = '';
     return;
   }
 
-  const ids = raffle?.tickets.map((t: Ticket) => t.id);
-  ticketIds.value = JSON.stringify(ids, null, 2);
-  checksumError.value = '';
-  checksum.value = await getTicketChecksum(ids);
+  if (!raffle.secretSeed) {
+    error.value = 'Raffle Secret is not yet published!';
+    sha256.value = '';
+    return;
+  }
+
+  seed.value = raffle.secretSeed;
+  sha256Error.value = '';
+  sha256.value = await getSHA256Hash(seed.value);
 }
 
-async function updateChecksum() {
-  let ids = [];
-  try {
-    ids = JSON.parse(ticketIds.value);
-    checksumError.value = '';
-  } catch {
-    checksumError.value = 'Invalid JSON-format';
-    checksum.value = '';
-    return;
-  }
-  checksum.value = await getTicketChecksum(ids);
+async function updateSHA256() {
+  sha256.value = await getSHA256Hash(seed.value);
 }
 </script>
 
@@ -105,10 +100,10 @@ input {
 <template>
   <div>
     <div class="intro">
-      <h2>(2) Ticket Checksum</h2>
-      When participating in a raffle, you recieve the Ticket Checksum in the receipt. After a raffle
-      has ended, all ticket ids are published. You can use this tool to verify that the checksum of
-      all the tickets havn't changed.
+      <h2>(1) Secret Seed</h2>
+      When participating in a raffle, you recieve the SHA-256 encryption of the Secret Seed in the
+      receipt. After a raffle has ended, the Secret Seed is published. You can use this tool to
+      verify that the Secret Seed havn't changed.
     </div>
     <div class="selector">
       <a
@@ -129,28 +124,27 @@ input {
     </div>
     <div class="try-form" v-if="selectedOption === 'try'">
       <div>
-        Load tickets from raffle:<br />
+        Load Secret seed from raffle:<br />
         <input type="text" placeholder="Raffle Id" v-model="raffleId" />
         <button v-on:click="loadFromRaffle()">Load</button>
         <span class="error-msg">{{ error }}</span>
       </div>
       <div style="margin-top: 50px">
-        Tickets:<br />
-        <textarea
-          v-model="ticketIds"
-          v-on:keyup="updateChecksum()"
-          placeholder='["abc123", "def456"]'
-        ></textarea>
-        <div class="error-msg">{{ checksumError }}</div>
+        Secret Seed:<br />
+        <input type="text" v-model="seed" v-on:keyup="updateSHA256()" />
       </div>
       <div style="margin-top: 25px">
-        Checksum of all tickets above:<br />
+        Public SHA-256 Encrypted:
         <div>
-          <b>{{ checksum }}</b>
+          <b>{{ sha256 }}</b>
         </div>
         <div style="font-size: 12px">
-          This should be the same Ticket checksum that you recieved in the receipt to guaranee that
-          the Tickets havn't changed.<br />
+          This should be the same Public Hash that you recieved in the receipt to guaranee that the
+          Secret Seed havn't changed.<br />
+          You can also use other SHA-256 calculators for example:
+          <a href="https://emn178.github.io/online-tools/sha256.html" target="_blank"
+            >https://emn178.github.io/online-tools/sha256.html</a
+          >
         </div>
       </div>
     </div>
@@ -162,66 +156,38 @@ input {
 <script lang="ts">
 import { defineComponent } from 'vue';
 
-async function getTicketChecksum(ticketIds: string[]) {
+async function getSHA256Hash(seed: string) {
   const encoder = new TextEncoder();
-  const data = encoder.encode(ticketIds.join(''));
+  const data = encoder.encode(seed);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-  const ticketChecksum = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-
-  return ticketChecksum;
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
 }
 
 const verifyJs = `
-async function getTicketChecksum(ticketIds) {
+async function getSHA256Hash(seed) {
   const encoder = new TextEncoder();
-  const data = encoder.encode(ticketIds.join(''));
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const data = encoder.encode(seed);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-  const ticketChecksum = hashArray
-    .map(b => b.toString(16)
-    .padStart(2, '0')).join('');
-
-  return ticketChecksum;
+  const hashHex = hashArray
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+  return hashHex;
 }
 
-const ticketIds = [
-  // Add all ticket ids here
-  '63140d1c',
-  'e4019bd3',
-];
-
-getTicketChecksum(ticketIds).then(checksum => {
-  console.log(checksum);
-});
+getSHA256Hash('INSERT-SECRET-SEED-HERE').then(console.log);
 `;
 
 const verifyPython = `
-import hmac
 import hashlib
 
-def hmac_value(seed: str, ticket_number: str) -> str:
-  return hmac.new(seed.encode(), ticket_number.encode(), hashlib.sha256).hexdigest()
+def get_sha256_hash(secret_seed: str) -> str:
+    return hashlib.sha256(secret_seed.encode("utf-8")).hexdigest()
 
-def decide_winner(raffle: dict, secret_seed: str, ticket_checksum: str, bitcoin_block_hash: str):
-  seed = secret_seed + ticket_checksum + bitcoin_block_hash
-
-  owned_tickets = [t for t in raffle.get('tickets', []) if t.get('ownerId') is not None]
-  if not owned_tickets:
-    return None
-
-  leader = None
-  for t in owned_tickets:
-    h = hmac_value(seed, str(t['number']))
-    value = int(h, 16)
-
-    if leader is None or value > leader['value']:
-      leader = {'ticket': t, 'value': value}
-
-  return leader['ticket'] if leader else None
-
+public_hash = get_sha256_hash("INSERT-SECRET-SEED-HERE")
+print(public_hash)
 `;
 
 export default defineComponent({

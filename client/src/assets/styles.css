@@ -16,6 +16,10 @@ nav {
   background-color: #496b9e;
 }
 
+a {
+  color: #a396e0;
+}
+
 nav a {
   font-weight: 600;
   color: white;
