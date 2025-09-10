@@ -1,6 +1,6 @@
 import type { Raffle } from "@/types/Raffle";
 
-const apiUrl = `http://localhost:3001`;
+const apiUrl = `${document.location.protocol}//${document.location.hostname}:3001`;
 
 export async function fetchRaffle(raffleId: string): Promise<Raffle | null> {
   try {

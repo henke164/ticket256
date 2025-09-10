@@ -1,4 +1,4 @@
-import { Ticket } from "./Ticket";
+import type { Ticket } from "./Ticket";
 
 export type Raffle = {
   id: string;
