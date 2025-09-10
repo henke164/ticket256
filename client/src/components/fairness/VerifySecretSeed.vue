@@ -129,7 +129,7 @@ input {
         <button v-on:click="loadFromRaffle()">Load</button>
         <span class="error-msg">{{ error }}</span>
       </div>
-      <div style="margin-top: 50px">
+      <div style="margin-top: 25px">
         Secret Seed:<br />
         <input type="text" v-model="seed" v-on:keyup="updateSHA256()" />
       </div>

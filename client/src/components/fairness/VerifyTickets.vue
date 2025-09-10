@@ -134,7 +134,7 @@ input {
         <button v-on:click="loadFromRaffle()">Load</button>
         <span class="error-msg">{{ error }}</span>
       </div>
-      <div style="margin-top: 50px">
+      <div style="margin-top: 25px">
         Tickets:<br />
         <textarea
           v-model="ticketIds"
