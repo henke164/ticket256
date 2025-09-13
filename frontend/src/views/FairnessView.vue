@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import VerifySecretSeed from '../components/fairness/VerifySecretSeed.vue';
 import VerifyTickets from '../components/fairness/VerifyTickets.vue';
-import DecideWinner from '../components/fairness/DecideWinner.vue';
+import VerifyWinner from '../components/fairness/VerifyWinner.vue';
 import 'highlight.js/lib/common';
 import 'highlight.js/styles/github-dark.css';
 </script>
@@ -26,6 +26,7 @@ import 'highlight.js/styles/github-dark.css';
 
 .code {
   background-color: #0d1117;
+  font-size: 12px;
 }
 
 .selector {
@@ -108,11 +109,11 @@ import 'highlight.js/styles/github-dark.css';
       </div>
     </div>
     <div class="column code">
+      <VerifyWinner />
+      <div class="spacing"></div>
       <VerifySecretSeed />
       <div class="spacing"></div>
       <VerifyTickets />
-      <div class="spacing"></div>
-      <DecideWinner />
     </div>
   </div>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { getTicketChecksum } from '@/utils/raffleUtilities';
+import { getTicketChecksum, getSHA256Hash } from '@/utils/raffleUtilities';
 import { fetchRaffle } from '@/services/raffleService';
 import type { Ticket } from '@/types/Ticket';
 import 'highlight.js/lib/common';
@@ -10,7 +10,9 @@ const raffleId = ref<string>('3c5b2ba1-02ba-46f8-a1f3-959cbbdcd60c');
 const ticketIds = ref<string>('');
 const checksum = ref<string>('');
 const error = ref<string>('');
-const selectedOption = ref<'try' | 'js' | 'python'>('js');
+const sha256 = ref<string>('');
+const seed = ref<string>('');
+const selectedOption = ref<'try' | 'js' | 'python'>('try');
 
 async function loadFromRaffle() {
   error.value = '';
@@ -24,6 +26,10 @@ async function loadFromRaffle() {
   const ids = raffle?.tickets.map((t: Ticket) => t.id);
   ticketIds.value = JSON.stringify(ids, null, 2);
   checksum.value = await getTicketChecksum(ids);
+}
+
+async function updateSHA256() {
+  sha256.value = await getSHA256Hash(seed.value);
 }
 
 async function updateChecksum() {
@@ -96,12 +102,15 @@ input {
 <template>
   <div>
     <div class="intro">
-      <h2>(2) Ticket Checksum</h2>
-      When participating in a raffle, you recieve the Ticket Checksum in the receipt. After a raffle
-      has ended, all ticket ids are published. You can use this tool to verify that the checksum of
-      all the tickets havn't changed.
+      <h2>Verify winner</h2>
+      Below is the algorithm that decides the winning ticket.
     </div>
     <div class="selector">
+      <a
+        v-on:click="selectedOption = 'try'"
+        :class="selectedOption === 'try' ? 'selected' : undefined"
+        >Try</a
+      >
       <a
         v-on:click="selectedOption = 'js'"
         :class="selectedOption === 'js' ? 'selected' : undefined"
@@ -112,11 +121,6 @@ input {
         :class="selectedOption === 'python' ? 'selected' : undefined"
         >Python</a
       >
-      <a
-        v-on:click="selectedOption = 'try'"
-        :class="selectedOption === 'try' ? 'selected' : undefined"
-        >Try it</a
-      >
     </div>
     <div class="try-form" v-if="selectedOption === 'try'">
       <div>
@@ -124,6 +128,20 @@ input {
         <input type="text" placeholder="Raffle Id" v-model="raffleId" />
         <button v-on:click="loadFromRaffle()">Load</button>
         <span class="error-msg">{{ error }}</span>
+      </div>
+
+      <div style="margin-top: 10px">
+        Secret Seed:<br />
+        <input
+          type="text"
+          placeholder="Enter secret seed"
+          v-model="seed"
+          v-on:keyup="updateSHA256()"
+        />
+      </div>
+      <div style="margin-top: 10px">
+        Bitcoin Hash:<br />
+        <input placeholder="Enter Bitcoin hash" type="text" />
       </div>
       <div style="margin-top: 10px">
         Tickets:<br />
@@ -140,46 +158,54 @@ ghi789"
         <div>
           <b>{{ checksum || '-' }}</b>
         </div>
-        <div>
-          This should be the same Ticket checksum that you recieved in the receipt to guaranee that
-          the Tickets havn't changed.<br />
-        </div>
       </div>
     </div>
-    <highlightjs v-if="selectedOption === 'js'" language="js" :code="verifyJs" />
-    <highlightjs v-if="selectedOption === 'python'" language="python" :code="verifyPython" />
+    <highlightjs v-if="selectedOption === 'js'" language="js" :code="winnerAlgorithmJs" />
+    <highlightjs
+      v-if="selectedOption === 'python'"
+      language="python"
+      :code="winnerAlgorithmPython"
+    />
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
 
-const verifyJs = `
-async function getTicketChecksum(ticketIds) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(ticketIds.join(''));
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-  const ticketChecksum = hashArray
-    .map(b => b.toString(16)
-    .padStart(2, '0')).join('');
-
-  return ticketChecksum;
+const winnerAlgorithmJs = `
+function hmacValue(seed, ticketNumber) {
+  return crypto
+    .createHmac("sha256", seed)
+    .update(ticketNumber)
+    .digest("hex");
 }
 
-const ticketIds = [
-  // Add all ticket ids here
-  '63140d1c',
-  'e4019bd3',
-];
+function decideWinner(raffle, secretSeed, ticketChecksum, bitcoinBlockHash) {
+  const seed = secretSeed + ticketChecksum + bitcoinBlockHash;
 
-getTicketChecksum(ticketIds).then(checksum => {
-  console.log(checksum);
-});
+  // Only tickets with owners. If the ticket isn't bought, it cannot win
+  const ownedTickets = raffle.tickets.filter((t) => t.ownerId !== null);
+  if (ownedTickets.length === 0) {
+    return null;
+  }
+
+  // Create a top-list based on the random seed
+  let leader = null;
+  for (const t of ownedTickets) {
+    const h = hmacValue(seed, t.number.toString());
+    const value = BigInt("0x" + h);
+
+    if (!leader || value > leader.value) {
+      leader = { ticket: t, value };
+    }
+  }
+
+  // Winner is the top scored ticket
+  return leader?.ticket || null;
+}
 `;
 
-const verifyPython = `
+const winnerAlgorithmPython = `
 import hmac
 import hashlib
 
@@ -206,7 +232,7 @@ def decide_winner(raffle: dict, secret_seed: str, ticket_checksum: str, bitcoin_
 `;
 
 export default defineComponent({
-  name: 'VerifyTickets',
+  name: 'DecideWinner',
 });
 </script>
 <style scoped></style>

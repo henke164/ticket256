@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { fetchRaffle } from '@/services/raffleService';
+import { getSHA256Hash } from '@/utils/raffleUtilities';
 import 'highlight.js/lib/common';
 import 'highlight.js/styles/github-dark.css';
 
@@ -129,16 +130,21 @@ input {
         <button v-on:click="loadFromRaffle()">Load</button>
         <span class="error-msg">{{ error }}</span>
       </div>
-      <div style="margin-top: 25px">
+      <div style="margin-top: 10px">
         Secret Seed:<br />
-        <input type="text" v-model="seed" v-on:keyup="updateSHA256()" />
+        <input
+          type="text"
+          placeholder="Enter secret seed"
+          v-model="seed"
+          v-on:keyup="updateSHA256()"
+        />
       </div>
-      <div style="margin-top: 25px">
+      <div style="margin-top: 10px">
         Public SHA-256 Encrypted:
         <div>
-          <b>{{ sha256 }}</b>
+          <b>{{ sha256 || '-' }}</b>
         </div>
-        <div style="font-size: 12px">
+        <div>
           This should be the same Public Hash that you recieved in the receipt to guaranee that the
           Secret Seed havn't changed.<br />
           You can also use other SHA-256 calculators for example:
@@ -155,15 +161,6 @@ input {
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-
-async function getSHA256Hash(seed: string) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(seed);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-  return hashHex;
-}
 
 const verifyJs = `
 async function getSHA256Hash(seed) {
