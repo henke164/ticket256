@@ -1,17 +1,23 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import Home from '../views/HomeView.vue';
-import Fairness from '../views/FairnessView.vue';
+import HomeView from '../views/HomeView.vue';
+import FairnessView from '../views/FairnessView.vue';
+import AdminView from '@/views/AdminView.vue';
 
 const routes = [
   {
     path: '/',
     name: 'Raffles',
-    component: Home
+    component: HomeView
   },
   {
     path: '/fairness',
     name: 'Provably Fair',
-    component: Fairness
+    component: FairnessView
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: AdminView
   }
 ]
 

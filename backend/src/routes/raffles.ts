@@ -3,13 +3,6 @@ import fs from "fs";
 import express from "express";
 const router = express.Router();
 
-router.get("/create", async (req, res) => {
-  const html = fs
-    .readFileSync(__dirname + "/../views/createRaffle.html")
-    .toString();
-  res.send(html);
-});
-
 router.get("/verify", async (req, res) => {
   const html = fs
     .readFileSync(__dirname + "/../views/verifyRaffle.html")

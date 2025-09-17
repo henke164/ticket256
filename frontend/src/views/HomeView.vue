@@ -1,7 +1,13 @@
 <script setup lang="ts"></script>
 
 <template>
-<h1>Raffles</h1>
+  <div class="content">
+    <h1>Raffles</h1>
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.content {
+  padding: 0px 40px;
+}
+</style>
