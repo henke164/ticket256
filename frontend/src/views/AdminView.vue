@@ -18,26 +18,28 @@ async function create() {
     <h1>Admin</h1>
     <h4>Create Raffle</h4>
     <table>
-      <tr>
-        <td>Tickets:</td>
-        <td>
-          <input v-model="ticketCount" type="number" />
-        </td>
-      </tr>
+      <tbody>
+        <tr>
+          <td>Tickets:</td>
+          <td>
+            <input v-model="ticketCount" type="number" />
+          </td>
+        </tr>
 
-      <tr>
-        <td>Duration (hours):</td>
-        <td>
-          <input type="number" placeholder="1" value="1" />
-        </td>
-      </tr>
+        <tr>
+          <td>Duration (hours):</td>
+          <td>
+            <input type="number" placeholder="1" value="1" />
+          </td>
+        </tr>
 
-      <tr>
-        <td></td>
-        <td>
-          <button v-on:click="create()">Create</button>
-        </td>
-      </tr>
+        <tr>
+          <td></td>
+          <td>
+            <button v-on:click="create()">Create</button>
+          </td>
+        </tr>
+      </tbody>
     </table>
   </div>
 </template>

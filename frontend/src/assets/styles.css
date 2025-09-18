@@ -1,19 +1,23 @@
 body {
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
   font-family: sans-serif;
-  background-color: #e8e6e6;
+  background-color: #01202F;
+  color: #FFF;
 }
 
 h1,
 h2,
 h3 {
-  color: #333;
+  color: #FFF;
 }
 
 nav {
   color: white;
-  padding: 20px;
-  background-color: #496b9e;
+  padding: 20px 40px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin: 40px;
+  border-radius: 100px;
 }
 
 a {
@@ -21,6 +25,8 @@ a {
 }
 
 nav a {
+  text-decoration: none;
   font-weight: 600;
   color: white;
+  padding: 0 20px;
 }

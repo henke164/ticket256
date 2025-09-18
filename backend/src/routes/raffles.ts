@@ -1,13 +1,16 @@
-import { createRaffle, getRaffle, getWinner } from "@/services/raffleService";
-import fs from "fs";
+import {
+  createRaffle,
+  getRaffle,
+  getRaffles,
+  getWinner,
+} from "@/services/raffleService";
 import express from "express";
 const router = express.Router();
 
-router.get("/verify", async (req, res) => {
-  const html = fs
-    .readFileSync(__dirname + "/../views/verifyRaffle.html")
-    .toString();
-  res.send(html);
+router.get("/", async (req, res) => {
+  console.log("Getting raffles");
+  const raffles = await getRaffles();
+  res.send(raffles);
 });
 
 router.get("/:id", async (req, res) => {

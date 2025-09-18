@@ -14,16 +14,11 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+app.use(routes);
 
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
-
-app.get("/", (req, res) => {
-  res.sendStatus(200);
-});
-
-app.use(routes);
 
 app.listen(PORT, () => {
   console.log("Server started on port", PORT);

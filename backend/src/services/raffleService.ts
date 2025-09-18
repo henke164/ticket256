@@ -17,6 +17,16 @@ function hmacValue(serverSeed: string, ticketNumber: crypto.BinaryLike) {
     .digest("hex");
 }
 
+export async function getRaffles() {
+  const files = fs.readdirSync(`${__dirname}/../raffles`);
+  const raffles = [];
+  for (const file of files) {
+    const raffle = await getRaffle(file.split(".")[0] as string, true);
+    raffles.push(raffle);
+  }
+  return raffles;
+}
+
 export async function getRaffle(id: string, isPublic: boolean) {
   if (!fs.existsSync(`${__dirname}/../raffles/${id}.json`)) {
     return null;

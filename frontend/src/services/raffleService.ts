@@ -45,3 +45,20 @@ export async function fetchRaffle(raffleId: string): Promise<Raffle | null> {
     return null;
   }
 }
+
+export async function fetchRaffles(): Promise<Raffle[]> {
+  try {
+    const raffleResponse = await fetch(`${apiUrl}/raffles`);
+    if (raffleResponse.status === 404) {
+      return [];
+    }
+    return await raffleResponse.json();
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      console.log(e.message);
+    } else {
+      console.log('An unknown error occurred');
+    }
+    return [];
+  }
+}
